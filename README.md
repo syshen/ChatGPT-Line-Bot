@@ -46,34 +46,31 @@
     5. 回到第四步，此時 `Github URL` 可以選擇 `ChatGPT-Line-Bot` 專案 -> 點擊 `Import from Github`。
 
 ### 專案執行
-1. 環境變數設定
-    1. 接續上一步 `Import` 完成後在 `Replit` 的專案管理頁面左下方 `Tools` 點擊 `Secrets`。
-    2. 右方按下 `Got it` 後，即可新增環境變數，需新增：
-        1. 欲選擇的模型：
-            - key: `OPENAI_MODEL_ENGINE`
-            - value: `gpt-3.5-turbo`  
-        2. ChatGPT 要讓助理扮演的角色詞（目前官方無釋出更多的使用方法，由玩家自行測試）
-            - key: `SYSTEM_MESSAGE`
-            - value: `You are a helpful assistant.`
-        3. Line Channel Secret:
-            - key: `LINE_CHANNEL_SECRET`
-            - value: `[由步驟一取得]`
-        4. Line Channel Access Token:
-            - key: `LINE_CHANNEL_ACCESS_TOKEN`
-            - value: `[由步驟一取得]`
+1. 部署到 Gcloud Run
+    `gcloud config set run/region us-central1`
+    `gcloud run deploy chatgpt-line-bot`
+2. 環境變數設定
+    `gcloud run services update chatgpt-line-bot --set-env-vars KEY1=VAULE1,KEY2=VALUE2`
+    1. 欲選擇的模型：
+        - key: `OPENAI_MODEL_ENGINE`
+        - value: `gpt-3.5-turbo`
+    2. ChatGPT 要讓助理扮演的角色詞（目前官方無釋出更多的使用方法，由玩家自行測試）
+        - key: `SYSTEM_MESSAGE`
+        - value: `You are a helpful assistant.`
+    3. Line Channel Secret:
+        - key: `LINE_CHANNEL_SECRET`
+        - value: `[由步驟一取得]`
+    4. Line Channel Access Token:
+        - key: `LINE_CHANNEL_ACCESS_TOKEN`
+        - value: `[由步驟一取得]`
+    5. OpenAI API Key
+        - key: `OPENAI_API_KEY`
+        - value: `sk-xxx`
 2. 開始執行
-    1. 點擊上方的 `Run`
-    2. 成功後右邊畫面會顯示 `Hello World`，並將畫面中上方的**網址複製**下來
-    3. 回到 Line Developer，在 `Messaging API` 下方的 `Webhook URL` 江上方網址貼過來，並加上 `/callback` 例如：`https://ChatGPT-Line-Bot.explainthis.repl.co/callback`
+    1. `gcloud run deploy chatgpt-line-bot`
+    2. 回到 Line Developer，在 `Messaging API` 下方的 `Webhook URL` 江上方網址貼過來，並加上 `/callback` 例如：`https://ChatGPT-Line-Bot.explainthis.repl.co/callback`
     4. 打開下方的 `Use webhook`
     5. 將下方 `Auto-reply messages` 關閉
-    - 注意：若一小時內沒有任何請求，則程式會中斷，因此需要下步驟
-3. CronJob 定時發送請求
-    1. 註冊/登入 [cron-job.org](https://cron-job.org/en/)
-    2. 進入後面板右上方選擇 `CREATE CRONJOB`
-    3. `Title` 輸入 `ChatGPT-Line-Bot`，網址輸入上一步驟的網址，例如：`https://ChatGPT-Line-Bot.explainthis.repl.co/`
-    4. 下方則每 `5 分鐘` 打一次
-    5. 按下 `CREATE`
 
 ## 指令
 在文字輸入框中直接輸入文字，即可與 ChatGPT 開始對話，而其他指令如下：
@@ -84,7 +81,7 @@
 | `/系統訊息` | 在輸入框輸入 `/系統訊息 ` + 可以設定希望 ChatGPT 扮演什麼角色|
 | `/清除` | 在輸入框輸入 `/清除 `，就可以清除歷史訊息|
 | `/圖像` | 在輸入框輸入 `/圖像` + 指令，就會調用 DALL·E 2 模型，即可生成圖像。|
-| 語音輸入 | 利用語音輸入，系統會自動將語音翻譯成文字，並且 ChatGPT 以文字回應| 
+| 語音輸入 | 利用語音輸入，系統會自動將語音翻譯成文字，並且 ChatGPT 以文字回應|
 | 其他文字輸入 | 直接輸入文字，則會進入一般的 ChatGPT 對話模式|
 
 

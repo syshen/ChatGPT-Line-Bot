@@ -32,8 +32,11 @@ website = Website()
 
 
 memory = Memory(system_message=os.getenv('SYSTEM_MESSAGE'), memory_message_count=2)
-model_management = {}
-api_keys = {}
+
+api_key = os.getenv("OPENAI_API_KEY")
+if api_key is None:
+    raise Exception("No OPENAI_API_KEY")
+user_model = OpenAIModel(api_key=api_key)
 
 
 @app.route("/callback", methods=['POST'])
@@ -56,19 +59,7 @@ def handle_text_message(event):
     logger.info(f'{user_id}: {text}')
 
     try:
-        if text.startswith('/註冊'):
-            api_key = text[3:].strip()
-            model = OpenAIModel(api_key=api_key)
-            is_successful, _, _ = model.check_token_valid()
-            if not is_successful:
-                raise ValueError('Invalid API token')
-            model_management[user_id] = model
-            storage.save({
-                user_id: api_key
-            })
-            msg = TextSendMessage(text='Token 有效，註冊成功')
-
-        elif text.startswith('/指令說明'):
+        if text.startswith('/指令說明'):
             msg = TextSendMessage(text="指令：\n/註冊 + API Token\n👉 API Token 請先到 https://platform.openai.com/ 註冊登入後取得\n\n/系統訊息 + Prompt\n👉 Prompt 可以命令機器人扮演某個角色，例如：請你扮演擅長做總結的人\n\n/清除\n👉 當前每一次都會紀錄最後兩筆歷史紀錄，這個指令能夠清除歷史訊息\n\n/圖像 + Prompt\n👉 會調用 DALL∙E 2 Model，以文字生成圖像\n\n語音輸入\n👉 會調用 Whisper 模型，先將語音轉換成文字，再調用 ChatGPT 以文字回覆\n\n其他文字輸入\n👉 調用 ChatGPT 以文字回覆")
 
         elif text.startswith('/系統訊息'):
@@ -82,7 +73,7 @@ def handle_text_message(event):
         elif text.startswith('/圖像'):
             prompt = text[3:].strip()
             memory.append(user_id, 'user', prompt)
-            is_successful, response, error_message = model_management[user_id].image_generations(prompt)
+            is_successful, response, error_message = user_model.image_generations(prompt)
             if not is_successful:
                 raise Exception(error_message)
             url = response['data'][0]['url']
@@ -93,7 +84,6 @@ def handle_text_message(event):
             memory.append(user_id, 'assistant', url)
 
         else:
-            user_model = model_management[user_id]
             memory.append(user_id, 'user', text)
             url = website.get_url_from_text(text)
             if url:
@@ -149,14 +139,14 @@ def handle_audio_message(event):
             fd.write(chunk)
 
     try:
-        if not model_management.get(user_id):
+        if not user_model:
             raise ValueError('Invalid API token')
         else:
-            is_successful, response, error_message = model_management[user_id].audio_transcriptions(input_audio_path, 'whisper-1')
+            is_successful, response, error_message = user_model.audio_transcriptions(input_audio_path, 'whisper-1')
             if not is_successful:
                 raise Exception(error_message)
             memory.append(user_id, 'user', response['text'])
-            is_successful, response, error_message = model_management[user_id].chat_completions(memory.get(user_id), 'gpt-3.5-turbo')
+            is_successful, response, error_message = user_model.chat_completions(memory.get(user_id), 'gpt-3.5-turbo')
             if not is_successful:
                 raise Exception(error_message)
             role, response = get_role_and_content(response)
@@ -187,10 +177,5 @@ if __name__ == "__main__":
         storage = Storage(MongoStorage(mongodb.db))
     else:
         storage = Storage(FileStorage('db.json'))
-    try:
-        data = storage.load()
-        for user_id in data.keys():
-            model_management[user_id] = OpenAIModel(api_key=data[user_id])
-    except FileNotFoundError:
-        pass
-    app.run(host='0.0.0.0', port=8080)
+
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 8080)))
