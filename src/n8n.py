@@ -1,17 +1,26 @@
 import requests
 from src.logger import logger
+import os
 
 
 class N8N:
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self.base_url = "https://n8n.jidou.xyz/webhook/"
+        n8n_env = os.getenv("N8N_ENV")
+        self.base_url = f"https://n8n.jidou.xyz/webhook{n8n_env}/"
 
     def identifyOrders(self, message_id, message):
         return self._request(
             "POST",
             "orders/identify",
             body={"message": message, "message_id": message_id},
+        )
+
+    def confirmOrder(self, order_id):
+        return self._request(
+            "POST",
+            "orders/confirm",
+            body={"order_id": order_id},
         )
 
     def _request(self, method, endpoint, body=None, files=None):

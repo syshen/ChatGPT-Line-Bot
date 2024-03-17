@@ -1,10 +1,7 @@
-line-bot-sdk==2.4.1
+line-bot-sdk==3.9.0
 python-dotenv==0.21.1
 Flask==2.2.2
 Werkzeug==2.3.7
 opencc-python-reimplemented==0.1.4
-beautifulsoup4==4.11.2
-youtube-transcript-api==0.5.0
-pymongo==4.3.3
 psycopg2==2.9.9
 pandas

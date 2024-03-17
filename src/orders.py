@@ -5,14 +5,24 @@ from psycopg2 import sql
 
 
 class Order:
-    def __init__(self, payload=None):
-        self.payload = payload
+    @classmethod
+    def createNewOrder(self, customer_id, order_id, orders=None, total=0):
+        try:
+            orders_json = json.dumps(orders)
+            customer_id = "C0A38F95-C8FB-4C62-902C-6379ADC6BC11"
+            query = sql.SQL(
+                "INSERT INTO orders (total, items, customer_id, order_id) VALUES (%s, %s, %s, %s)"
+            )
+            posgresdb.execute(query, values=[total, orders_json, customer_id, order_id])
+        except Exception as e:
+            logger.error("DB error", e)
 
-    def createNewOrder(self):
-        json_str = json.dumps(self.payload["orders"])
-        customer_id = "C0A38F95-C8FB-4C62-902C-6379ADC6BC11"
-        query = sql.SQL(
-            "INSERT INTO orders (total, items, customer_id) VALUES (%s, %s, %s)"
-        )
-        # query = f"INSERT INTO orders (total, items, customer_id) VALUES ('{self.payload['total']}', '{json_str}', 'C0A38F95-C8FB-4C62-902C-6379ADC6BC11')"
-        posgresdb.insert(query, values=[self.payload["total"], json_str, customer_id])
+    @classmethod
+    def confirmOrder(self, order_id):
+        try:
+            query = sql.SQL(
+                "UPDATE orders SET confirmed = true, confirmed_at = now() WHERE order_id = %s"
+            )
+            posgresdb.execute(query, values=[order_id])
+        except Exception as e:
+            logger.error("DB error", e)

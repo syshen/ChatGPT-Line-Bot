@@ -34,34 +34,12 @@ class PostgreSQL:
             port=self.port,
         )
 
-    def getCustomerById(self, id: int):
-        if self.conn is None:
+    def execute(self, query, values=None):
+        if self.conn is None or self.conn.closed != 0:
             self.connect()
-        rows = pd.read_sql(
-            "SELECT * FROM customers WHERE id = %s", self.conn, params=(id,)
-        )
-        if rows is None or rows.shape[0] == 0:
-            return None
-        return rows
-
-    def queryAll(self, query):
-        if self.conn is None:
-            self.connect()
-        cursor = self.conn.cursor()
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        cursor.close()
-        # conn.close()
-        return rows
-
-    def insert(self, query, values=None):
-        if self.conn is None:
-            self.connect()
-        cursor = self.conn.cursor()
-        cursor.execute(query, values)
-        self.conn.commit()
-        cursor.close()
-        # conn.close()
+        with self.conn.cursor() as curs:
+            curs.execute(query, values)
+            self.conn.commit()
 
 
 posgresdb = PostgreSQL()
