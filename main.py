@@ -9,6 +9,7 @@ from linebot.v3.exceptions import InvalidSignatureError
 
 from linebot.v3.messaging import (
     ReplyMessageRequest,
+    PushMessageRequest,
     MessagingApi,
     ApiClient,
     Configuration,
@@ -119,6 +120,7 @@ def handle_text_message(event):
                 message_id,
                 orders=response["orders"],
                 total=response["total"],
+                line_id=user_id,
             )
             bubble = FlexContainer.from_json(json.dumps(response["message"]))
             msg = FlexMessage(alt_text=response["alt_message"], contents=bubble)
@@ -139,6 +141,24 @@ def handle_text_message(event):
 
 @app.route("/", methods=["GET"])
 def home():
+    return "Hello World"
+
+
+@app.route("/push", methods=["POST"])
+def push():
+    content = request.json
+    line_id = content["line_id"]
+    message = content["message"]
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
+        push_message_req = PushMessageRequest.from_dict(
+            {"to": line_id, "messages": [{"type": "text", "text": message}]}
+        )
+        # x_line_retry_key = 'x_line_retry_key_example'
+        try:
+            resp = line_bot_api.push_message(push_message_req)
+        except Exception as e:
+            logger.error(e)
     return "Hello World"
 
 
