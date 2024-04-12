@@ -1,6 +1,7 @@
 import os
 import psycopg2
 import pandas as pd
+from src.logger import logger
 
 
 class PostgreSQL:
@@ -38,8 +39,10 @@ class PostgreSQL:
         if self.conn is None or self.conn.closed != 0:
             self.connect()
         with self.conn.cursor() as curs:
+            logger.info(f"DB execute: {query}")
             curs.execute(query, values)
             self.conn.commit()
+            logger.info("DB committed")
 
 
 posgresdb = PostgreSQL()

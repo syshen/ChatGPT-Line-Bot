@@ -18,6 +18,7 @@ from linebot.v3.messaging import (
     # TextSendMessage,
     FlexContainer,
     FlexMessage,
+    TextMessage,
     # ImageSendMessage,
     # AudioMessage,
 )
@@ -78,6 +79,7 @@ def handle_postback_message(event):
                 if not is_successful:
                     raise Exception(error_message)
 
+                logger.info(order_id)
                 Order.confirmOrder(order_id)
                 bubble = FlexContainer.from_dict(response["message"])
                 msg = FlexMessage(alt_text=response["alt_message"], contents=bubble)
@@ -85,6 +87,17 @@ def handle_postback_message(event):
                 line_bot_api.reply_message(
                     ReplyMessageRequest(reply_token=event.reply_token, messages=[msg])
                 )
+            elif text.startswith("cancel_order"):
+                order_id = text.split(" ")[1]
+                is_successful, response, error_message = n8n.cancelOrder(order_id)
+                if not is_successful:
+                    raise Exception(error_message)
+                Order.cancelOrder(order_id)
+                msg = TextMessage(text=response["message"])
+                line_bot_api.reply_message(
+                    ReplyMessageRequest(reply_token=event.reply_token, messages=[msg])
+                )
+
         except ValueError as e:
             logger.error(e)
 
@@ -94,6 +107,7 @@ def handle_text_message(event):
     user_id = event.source.user_id
     text = event.message.text.strip()
     message_id = event.message.id
+    group_id = event.source.group_id
     logger.info(event)
     logger.info(f"{user_id}: {text}")
 
@@ -101,27 +115,31 @@ def handle_text_message(event):
         line_bot_api = MessagingApi(api_client)
 
         try:
+            group_summary_resp = line_bot_api.get_group_summary(group_id)
+            group_name = group_summary_resp.group_name
+
             is_successful, response, error_message = n8n.identifyOrders(
-                message_id, text
+                message_id, group_name, text
             )
             if not is_successful:
                 raise Exception(error_message)
             logger.info(response)
-            if response["total"] == 0:
-                return
-                # order = Order(response)
-                # order.createNewOrder()
-                # role, response = get_role_and_content(response)
-                # msg = TextSendMessage(text=response["message"])
+            if "multiple_choices" in response:
+                logger.info("Has multiple choices")
+            else:
+                if response["total"] == 0:
+                    return
 
-            customer_id = "C0A38F95-C8FB-4C62-902C-6379ADC6BC11"
-            Order.createNewOrder(
-                customer_id,
-                message_id,
-                orders=response["orders"],
-                total=response["total"],
-                line_id=user_id,
-            )
+                if "customer_id" in response:
+                    customer_id = response["customer_id"]
+                Order.createNewOrder(
+                    customer_id,
+                    message_id,
+                    orders=response["orders"],
+                    total=response["total"],
+                    line_id=group_id,
+                    group_name=group_name,
+                )
             bubble = FlexContainer.from_json(json.dumps(response["message"]))
             msg = FlexMessage(alt_text=response["alt_message"], contents=bubble)
             logger.info(msg)

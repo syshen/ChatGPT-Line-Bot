@@ -9,11 +9,15 @@ class N8N:
         n8n_env = os.getenv("N8N_ENV")
         self.base_url = f"https://n8n.jidou.xyz/webhook{n8n_env}/"
 
-    def identifyOrders(self, message_id, message):
+    def identifyOrders(self, message_id, group_name, message):
         return self._request(
             "POST",
             "orders/identify",
-            body={"message": message, "message_id": message_id},
+            body={
+                "message": message,
+                "message_id": message_id,
+                "group_name": group_name,
+            },
         )
 
     def confirmOrder(self, order_id):
@@ -22,6 +26,9 @@ class N8N:
             "orders/confirm",
             body={"order_id": order_id},
         )
+
+    def cancelOrder(self, order_id):
+        return self._request("POST", "orders/cancel", body={"order_id": order_id})
 
     def _request(self, method, endpoint, body=None, files=None):
         self.headers = {"HTMM_KEY": self.api_key}

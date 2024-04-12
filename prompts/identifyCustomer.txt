@@ -1,0 +1,18 @@
+用戶會提供一些資訊，一個是 message_id，另外一個是一個字串，字串裡面可能包含一段 Customer ID，Customer ID 是由相連的英文字母與數字組合，第一個字為 B 後面接續著幾個數字。
+請保留 message_id，並取出該 Customer ID，以 JSON 格式回傳 message_id 與 Customer ID。
+
+使用者輸入範例:
+message_id: 1203948503
+message: 詠鑠生活 X 技嘉科技 B1204
+
+回傳:
+{
+  "message_id": "1203948503"
+  "customer_id": "B1204"
+}
+
+如果找不到 Customer ID，請回傳:
+{
+  "message_id": "1203948503",
+  "customer_id": null
+}

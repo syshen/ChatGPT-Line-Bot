@@ -3,7 +3,7 @@ from src.psqldb import posgresdb
 from src.logger import logger
 from psycopg2 import sql
 
-customer_id = "C0A38F95-C8FB-4C62-902C-6379ADC6BC11"
+customer_id = "B0794"
 
 
 class Customer:

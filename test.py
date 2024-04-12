@@ -90,7 +90,8 @@ message2 = {
 
 n8n = N8N(api_key=os.getenv("N8N_API_KEY"))
 
-print(n8n.confirmOrder("abdc123456"))
+print(n8n.identifyOrders("test12345", "豆奶6罐，謝謝"))
+# print(n8n.confirmOrder("abdc123456"))
 # json_str = json.dumps(message)
 # print(json_str)
 # bubble = FlexContainer.from_json(json_str)
